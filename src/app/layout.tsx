@@ -13,6 +13,8 @@ export const metadata: Metadata = {
     template: "%s · WorkPilot",
   },
   description: "Capture every work request and keep track of what matters.",
+  // A private tool, so there's nothing for search engines to find.
+  robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {

@@ -17,22 +17,24 @@ import { useWorkspaceScope } from "./use-workspace-scope";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 const linkStyles =
-  "flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring";
+  "flex h-9 items-center gap-2.5 rounded-md pointer-coarse:h-(--control-h) px-2.5 text-sm text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring";
 const activeLinkStyles =
   "bg-sidebar-accent font-medium text-sidebar-accent-foreground";
 
 export function Sidebar({
   workspaces,
   email,
+  inboxCount,
 }: {
   workspaces: readonly WorkspaceOption[];
   email: string;
+  inboxCount: number;
 }) {
   const { pathname, scope } = useWorkspaceScope(workspaces);
-  const { captures, openQuickCapture, shortcutLabel } = useCapture();
+  const { openQuickCapture, shortcutLabel } = useCapture();
 
   return (
-    <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r bg-sidebar p-3 md:flex">
+    <aside className="sticky top-0 hidden h-dvh flex-col gap-4 overflow-y-auto border-r bg-sidebar p-3 md:flex">
       <div className="flex h-8 items-center px-1">
         <Brand />
       </div>
@@ -61,10 +63,10 @@ export function Sidebar({
             >
               <Icon className="size-4" aria-hidden />
               <span className="flex-1">{label}</span>
-              {href === "/inbox" && captures.length > 0 && (
+              {href === "/inbox" && inboxCount > 0 && (
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  <span className="sr-only">Captured this session: </span>
-                  {captures.length}
+                  <span className="sr-only">To review: </span>
+                  {inboxCount}
                 </span>
               )}
             </Link>

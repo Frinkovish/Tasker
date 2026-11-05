@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { EmptyState } from "@/components/common/page";
 import { PriorityBadge } from "@/components/tasks/priority-badge";
 import { WorkspaceTag } from "@/components/tasks/workspace-tag";
@@ -11,7 +13,7 @@ export function PrioritiesList({ items }: { items: readonly PriorityItem[] }) {
   return (
     <ol className="divide-y rounded-lg border">
       {items.map((item, index) => (
-        <li key={item.id} className="flex gap-3 px-4 py-3">
+        <li key={item.id} className="relative flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
           <span
             aria-hidden
             className="pt-px text-sm tabular-nums text-muted-foreground"
@@ -20,7 +22,12 @@ export function PrioritiesList({ items }: { items: readonly PriorityItem[] }) {
           </span>
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-start justify-between gap-3">
-              <p className="min-w-0 text-sm font-medium">{item.title}</p>
+              <Link
+                href={`/tasks/${item.id}`}
+                className="min-w-0 text-sm font-medium break-words outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+              >
+                {item.title}
+              </Link>
               <PriorityBadge priority={item.priority} />
             </div>
             <p className="text-xs text-muted-foreground">{item.reason}</p>

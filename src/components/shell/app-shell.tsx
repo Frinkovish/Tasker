@@ -21,12 +21,20 @@ const getWorkspaceOptions = cache(async (): Promise<WorkspaceOption[]> => {
   return workspaces.map(({ id, name, color }) => ({ id, name, color }));
 });
 
+const getInboxCount = cache(async (): Promise<number> => {
+  const captures = await repository.listCaptures();
+  return captures.length;
+});
+
 async function SidebarSlot() {
-  const [workspaces, user] = await Promise.all([
+  const [workspaces, user, inboxCount] = await Promise.all([
     getWorkspaceOptions(),
     getCurrentUser(),
+    getInboxCount(),
   ]);
-  return <Sidebar workspaces={workspaces} email={user.email} />;
+  return (
+    <Sidebar workspaces={workspaces} email={user.email} inboxCount={inboxCount} />
+  );
 }
 
 async function MobileTopBarSlot() {
@@ -34,7 +42,11 @@ async function MobileTopBarSlot() {
 }
 
 async function MobileTabBarSlot() {
-  return <MobileTabBar workspaces={await getWorkspaceOptions()} />;
+  const [workspaces, inboxCount] = await Promise.all([
+    getWorkspaceOptions(),
+    getInboxCount(),
+  ]);
+  return <MobileTabBar workspaces={workspaces} inboxCount={inboxCount} />;
 }
 
 /**

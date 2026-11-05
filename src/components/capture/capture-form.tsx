@@ -1,12 +1,17 @@
 "use client";
 
-import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useId,
+  useState,
+  useTransition,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { createCapture } from "@/lib/captures/actions";
 import { captureInputSchema } from "@/lib/domain/capture";
-
-import { useCapture } from "./capture-provider";
 
 export const CAPTURE_PLACEHOLDER =
   "Emma asked me to update the ELD dashboard with new enrollment figures before Thursday. It should include validation rules.";
@@ -26,22 +31,37 @@ export function CaptureForm({
   autoFocus,
   confirmationAction,
 }: CaptureFormProps) {
-  const { addCapture } = useCapture();
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [justCaptured, setJustCaptured] = useState(false);
   const errorId = useId();
 
   const submit = () => {
-    const result = captureInputSchema.safeParse({ text: value });
-    if (!result.success) {
-      setError(result.error.issues[0].message);
+    if (isPending) return;
+
+    const parsed = captureInputSchema.safeParse({ text: value });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0].message);
       setJustCaptured(false);
       return;
     }
-    addCapture(result.data.text);
-    onValueChange("");
-    setError(null);
-    setJustCaptured(true);
+
+    startTransition(async () => {
+      // The text is only cleared once it's saved, so a failure can't lose it.
+      // Catching here also keeps a dropped connection from replacing the page
+      // with an error screen, which would throw the text away.
+      const result = await createCapture(parsed.data.text).catch(() => ({
+        error: "Couldn't reach the server. Your text is still here, so try again.",
+      }));
+      if (result.error) {
+        setError(result.error);
+        setJustCaptured(false);
+        return;
+      }
+      onValueChange("");
+      setError(null);
+      setJustCaptured(true);
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -68,8 +88,9 @@ export function CaptureForm({
         autoFocus={autoFocus}
         rows={4}
         value={value}
+        readOnly={isPending}
         placeholder={CAPTURE_PLACEHOLDER}
-        className="resize-none text-base md:text-sm"
+        className="resize-none"
         onKeyDown={onKeyDown}
         onChange={(event) => {
           onValueChange(event.target.value);
@@ -81,8 +102,8 @@ export function CaptureForm({
         <p className="hidden text-xs text-muted-foreground md:block">
           Enter to capture · Shift + Enter for a new line
         </p>
-        <Button type="submit" className="ml-auto">
-          Capture
+        <Button type="submit" disabled={isPending} className="ml-auto">
+          {isPending ? "Capturing…" : "Capture"}
         </Button>
       </div>
 
@@ -94,8 +115,7 @@ export function CaptureForm({
       <div role="status" className="text-sm text-muted-foreground">
         {justCaptured && (
           <p>
-            Captured for this session only. It isn&apos;t saved yet.{" "}
-            {confirmationAction}
+            Captured and saved to your inbox. {confirmationAction}
           </p>
         )}
       </div>

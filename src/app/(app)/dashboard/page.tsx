@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import {
@@ -15,7 +16,8 @@ import { getTimeZone } from "@/lib/config";
 import { buildDashboard } from "@/lib/dashboard/build-dashboard";
 import { repository } from "@/lib/data";
 import { formatLongDate } from "@/lib/format";
-import { parseWorkspaceScope } from "@/lib/workspaces/scope";
+import { buildPlanHref } from "@/lib/prioritization/plan";
+import { ALL_WORKSPACES, parseWorkspaceScope } from "@/lib/workspaces/scope";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -34,9 +36,10 @@ export default function DashboardPage({
 async function DashboardContent({
   searchParams,
 }: Pick<PageProps<"/dashboard">, "searchParams">) {
-  const [{ workspace }, workspaces] = await Promise.all([
+  const [{ workspace }, workspaces, captures] = await Promise.all([
     searchParams,
     repository.listWorkspaces(),
+    repository.listCaptures(),
   ]);
   const scope = parseWorkspaceScope(
     workspace,
@@ -49,12 +52,15 @@ async function DashboardContent({
 
   const now = new Date();
   const timeZone = getTimeZone();
+  const isAllWorkspaces = scope === ALL_WORKSPACES;
   const { stats, priorities, recentRequests } = buildDashboard(
     tasks,
     workspaces,
     stakeholders,
     now,
     timeZone,
+    // Captures have no workspace yet, so they only fit the all-workspaces view.
+    isAllWorkspaces ? captures : [],
   );
 
   return (
@@ -64,13 +70,29 @@ async function DashboardContent({
         description={formatLongDate(now, timeZone)}
       />
       <WorkspaceFilter workspaces={workspaces} scope={scope} />
-      <StatsStrip stats={stats} />
+      <StatsStrip stats={stats} workspaceId={isAllWorkspaces ? null : scope} />
+      {captures.length > 0 && (
+        <Link
+          href="/inbox"
+          className="block rounded-lg border px-4 py-2.5 text-sm hover:bg-muted/50"
+        >
+          {captures.length === 1
+            ? "1 request is waiting for review"
+            : `${captures.length} requests are waiting for review`}
+        </Link>
+      )}
       <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
         <Section
           title="Today's priorities"
-          description="Ranked by deadline, then priority. Early preview of the Phase 5 engine."
+          description="The three most important tasks, and why."
         >
           <PrioritiesList items={priorities} />
+          <Link
+            href={buildPlanHref(null, isAllWorkspaces ? null : scope)}
+            className="inline-flex min-h-(--control-h-sm) items-center text-sm underline underline-offset-4"
+          >
+            Open today&apos;s full plan
+          </Link>
         </Section>
         <Section title="Recent requests">
           <RecentRequests items={recentRequests} now={now} />

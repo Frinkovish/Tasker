@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { unstable_rethrow } from "next/navigation";
-import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { repository } from "@/lib/data";
@@ -11,58 +9,8 @@ import {
   stakeholderInputSchema,
   workspaceUpdateSchema,
 } from "@/lib/domain/workspace";
-
-import type { FormState } from "./form-state";
-
-const idSchema = z.uuid();
-
-function readForm(formData: FormData): Record<string, string> {
-  return Object.fromEntries(
-    [...formData.entries()]
-      // React adds its own hidden fields to forms that use server actions.
-      .filter(([key, value]) => !key.startsWith("$") && typeof value === "string")
-      .map(([key, value]) => [key, value as string]),
-  );
-}
-
-/**
- * Validates the form, runs the change and refreshes the app. The layout is
- * revalidated because workspace details also appear in the navigation.
- */
-async function runFormAction<Input>(options: {
-  formData: FormData;
-  ids: readonly string[];
-  schema: z.ZodType<Input>;
-  run: (input: Input) => Promise<void>;
-  successMessage: string;
-}): Promise<FormState> {
-  await getCurrentUser();
-
-  const values = readForm(options.formData);
-  if (!options.ids.every((id) => idSchema.safeParse(id).success)) {
-    return { status: "error", message: "This item no longer exists.", values };
-  }
-
-  const parsed = options.schema.safeParse(values);
-  if (!parsed.success) {
-    return { status: "error", message: parsed.error.issues[0].message, values };
-  }
-
-  try {
-    await options.run(parsed.data);
-  } catch (error) {
-    unstable_rethrow(error);
-    console.error(error);
-    return {
-      status: "error",
-      message: "That couldn't be saved. Try again.",
-      values,
-    };
-  }
-
-  revalidatePath("/", "layout");
-  return { status: "success", message: options.successMessage, values: {} };
-}
+import type { FormState } from "@/lib/forms/form-state";
+import { isValidId, runFormAction } from "@/lib/forms/run-form-action";
 
 export async function updateWorkspace(
   workspaceId: string,
@@ -108,14 +56,14 @@ export async function createProject(
 
 export async function deleteStakeholder(id: string): Promise<void> {
   await getCurrentUser();
-  if (!idSchema.safeParse(id).success) return;
+  if (!isValidId(id)) return;
   await repository.deleteStakeholder(id);
   revalidatePath("/", "layout");
 }
 
 export async function deleteProject(id: string): Promise<void> {
   await getCurrentUser();
-  if (!idSchema.safeParse(id).success) return;
+  if (!isValidId(id)) return;
   await repository.deleteProject(id);
   revalidatePath("/", "layout");
 }

@@ -24,7 +24,7 @@ export function WorkspaceFilter({ workspaces, scope }: WorkspaceFilterProps) {
   return (
     <nav
       aria-label="Filter by workspace"
-      className="hidden max-w-full items-center gap-0.5 rounded-lg bg-muted p-0.5 md:inline-flex"
+      className="hidden max-w-full flex-wrap items-center gap-0.5 rounded-lg bg-muted p-0.5 md:inline-flex"
     >
       {options.map(({ id, name, color }) => {
         const isActive = id === scope;
@@ -34,7 +34,7 @@ export function WorkspaceFilter({ workspaces, scope }: WorkspaceFilterProps) {
             href={withScope("/dashboard", id)}
             aria-current={isActive ? "true" : undefined}
             className={cn(
-              "flex h-7 min-w-0 items-center gap-1.5 rounded-md px-2.5 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+              "flex h-(--control-h-sm) max-w-full min-w-0 items-center gap-1.5 rounded-md px-2.5 text-xs text-foreground/75 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
               isActive && "bg-background font-medium text-foreground shadow-xs",
             )}
           >

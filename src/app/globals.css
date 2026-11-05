@@ -118,6 +118,25 @@
   }
 }
 
+/*
+ * How big controls are. Finger-sized on small screens and on touch devices of any
+ * size, and compact only with a mouse on a wider screen. Text in a field stays at
+ * 16px on touch devices, because iOS zooms in on anything smaller when it's focused.
+ */
+:root {
+  --control-h: 2.75rem;
+  --control-h-sm: 2.5rem;
+  --control-text: 1rem;
+}
+
+@media (min-width: 48rem) and (pointer: fine) {
+  :root {
+    --control-h: 2rem;
+    --control-h-sm: 1.75rem;
+    --control-text: 0.875rem;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -127,5 +146,12 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Keeps a focused field clear of the mobile top bar and tab bar. */
+@media (max-width: 47.99rem) {
+  html {
+    scroll-padding-block: 4.5rem 5.5rem;
   }
 }

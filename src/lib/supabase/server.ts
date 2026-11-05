@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 
-import { getSupabaseEnv } from "./env";
+import { getSupabaseEnv, SESSION_COOKIE_OPTIONS } from "./env";
 
 /** A client that acts as the signed-in user, so Row Level Security applies. */
 export async function createClient() {
@@ -15,6 +15,7 @@ export async function createClient() {
   const { url, publishableKey } = getSupabaseEnv();
 
   return createServerClient(url, publishableKey, {
+    cookieOptions: SESSION_COOKIE_OPTIONS,
     cookies: {
       getAll() {
         return cookieStore.getAll();

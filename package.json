@@ -10,7 +10,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test \"src/**/*.test.ts\"",
     "db:push": "node --env-file=.env.local scripts/db.mjs push",
-    "db:test": "node --env-file=.env.local scripts/db.mjs test"
+    "db:test": "node --env-file=.env.local scripts/db.mjs test",
+    "test:e2e": "node --env-file=.env.local e2e/run.mjs",
+    "test:ai": "node --env-file=.env.local --experimental-transform-types --no-warnings e2e/assistant-eval.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -30,8 +32,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axe-core": "^4.14.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
+    "playwright-core": "^1.64.1",
     "shadcn": "^4.23.0",
     "tailwindcss": "^4",
     "typescript": "^5"

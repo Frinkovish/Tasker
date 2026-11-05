@@ -5,6 +5,16 @@ const supabaseEnvSchema = z.object({
   publishableKey: z.string().min(1),
 });
 
+/**
+ * Only the server ever reads the session, so scripts in the page don't need it, and
+ * in production it's only sent over HTTPS.
+ */
+export const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+} as const;
+
 /** Public by design: Row Level Security, not this key, protects the data. */
 export function getSupabaseEnv() {
   const result = supabaseEnvSchema.safeParse({

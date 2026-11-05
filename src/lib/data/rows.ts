@@ -1,5 +1,23 @@
 // Relative imports with extensions let Node's test runner load this file.
-import { taskSchema, type Task } from "../domain/task.ts";
+import {
+  assistantConversationSchema,
+  assistantMessageSchema,
+  assistantProposalSchema,
+  type AssistantConversation,
+  type AssistantMessage,
+  type AssistantProposal,
+} from "../domain/assistant.ts";
+import { captureSchema, type Capture } from "../domain/capture.ts";
+import {
+  subtaskSchema,
+  taskActivitySchema,
+  taskNoteSchema,
+  taskSchema,
+  type Subtask,
+  type Task,
+  type TaskActivity,
+  type TaskNote,
+} from "../domain/task.ts";
 import {
   projectSchema,
   stakeholderSchema,
@@ -14,6 +32,7 @@ const DATE_COLUMNS = new Set([
   "updated_at",
   "completed_at",
   "deadline",
+  "resolved_at",
 ]);
 
 const toCamelCase = (column: string) =>
@@ -46,3 +65,33 @@ export const parseProject = (row: Record<string, unknown>): Project =>
 
 export const parseTask = (row: Record<string, unknown>): Task =>
   taskSchema.parse(toDomainShape(row));
+
+export const parseCapture = (row: Record<string, unknown>): Capture =>
+  captureSchema.parse(toDomainShape(row));
+
+export const parseSubtask = (row: Record<string, unknown>): Subtask =>
+  subtaskSchema.parse(toDomainShape(row));
+
+export const parseTaskNote = (row: Record<string, unknown>): TaskNote =>
+  taskNoteSchema.parse(toDomainShape(row));
+
+export const parseTaskActivity = (row: Record<string, unknown>): TaskActivity =>
+  taskActivitySchema.parse(toDomainShape(row));
+
+export const parseAssistantConversation = (
+  row: Record<string, unknown>,
+): AssistantConversation => assistantConversationSchema.parse(toDomainShape(row));
+
+export const parseAssistantProposal = (
+  row: Record<string, unknown>,
+): AssistantProposal => assistantProposalSchema.parse(toDomainShape(row));
+
+/** The row includes the message's proposals, which arrive nested. */
+export const parseAssistantMessage = ({
+  assistant_proposals: proposals,
+  ...row
+}: Record<string, unknown>): AssistantMessage =>
+  assistantMessageSchema.parse({
+    ...toDomainShape(row),
+    proposals: (proposals as Record<string, unknown>[]).map(toDomainShape),
+  });

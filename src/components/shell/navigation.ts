@@ -1,5 +1,6 @@
 import {
   Bot,
+  CalendarCheck,
   Inbox,
   LayoutDashboard,
   ListChecks,
@@ -10,10 +11,13 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Left out of the mobile tab bar, which has room for four. */
+  sidebarOnly?: boolean;
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/plan", label: "Today", icon: CalendarCheck, sidebarOnly: true },
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/assistant", label: "Assistant", icon: Bot },

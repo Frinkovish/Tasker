@@ -18,9 +18,13 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight break-words">
+          {title}
+        </h1>
         {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm break-words text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
       {actions}
@@ -53,22 +57,5 @@ export function EmptyState({ children }: { children: ReactNode }) {
     <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
       {children}
     </p>
-  );
-}
-
-interface PhasePlaceholderProps {
-  phase: number;
-  children: ReactNode;
-}
-
-/** Marks a page as not built yet, so a placeholder can't pass for a feature. */
-export function PhasePlaceholder({ phase, children }: PhasePlaceholderProps) {
-  return (
-    <div className="rounded-lg border border-dashed px-4 py-10 text-center">
-      <p className="text-sm font-medium">Not built yet: planned for Phase {phase}</p>
-      <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-        {children}
-      </p>
-    </div>
   );
 }

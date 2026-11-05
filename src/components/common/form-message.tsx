@@ -1,4 +1,4 @@
-import type { FormState } from "@/lib/workspaces/form-state";
+import type { FormState } from "@/lib/forms/form-state";
 
 export function FormMessage({ state }: { state: FormState }) {
   if (!state.message) return null;

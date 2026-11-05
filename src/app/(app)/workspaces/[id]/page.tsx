@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import {
   PageContainer,
+  EmptyState,
   PageHeader,
-  PhasePlaceholder,
   Section,
 } from "@/components/common/page";
 import { StatsStrip } from "@/components/dashboard/stats-strip";
+import { TaskList } from "@/components/tasks/task-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectsSection } from "@/components/workspaces/projects-section";
 import { StakeholdersSection } from "@/components/workspaces/stakeholders-section";
@@ -16,6 +18,9 @@ import { WorkspaceSettingsForm } from "@/components/workspaces/workspace-setting
 import { getTimeZone } from "@/lib/config";
 import { buildDashboard } from "@/lib/dashboard/build-dashboard";
 import { repository } from "@/lib/data";
+import { isActive } from "@/lib/tasks/deadlines";
+import { buildTasksHref, sortTasks } from "@/lib/tasks/filters";
+import { toTaskListItems } from "@/lib/tasks/list-items";
 
 export const metadata: Metadata = { title: "Workspace" };
 
@@ -43,13 +48,22 @@ async function WorkspaceContent({
     repository.listStakeholders(id),
     repository.listProjects(id),
   ]);
+  const now = new Date();
+  const timeZone = getTimeZone();
   const { stats } = buildDashboard(
     tasks,
     [workspace],
     stakeholders,
-    new Date(),
-    getTimeZone(),
+    now,
+    timeZone,
   );
+  const activeTasks = toTaskListItems(sortTasks(tasks.filter(isActive)), {
+    workspaces: [workspace],
+    stakeholders,
+    projects,
+    now,
+    timeZone,
+  });
 
   return (
     <>
@@ -58,12 +72,20 @@ async function WorkspaceContent({
         description={workspace.description || undefined}
       />
       <Section title="Overview">
-        <StatsStrip stats={stats} />
+        <StatsStrip stats={stats} workspaceId={id} />
       </Section>
-      <Section title="Tasks">
-        <PhasePlaceholder phase={3}>
-          The task list for this workspace.
-        </PhasePlaceholder>
+      <Section title="Active tasks">
+        {activeTasks.length > 0 ? (
+          <TaskList items={activeTasks} />
+        ) : (
+          <EmptyState>No active tasks in this workspace.</EmptyState>
+        )}
+        <Link
+          href={buildTasksHref({ status: "all" }, id)}
+          className="inline-flex min-h-(--control-h-sm) items-center text-sm underline underline-offset-4"
+        >
+          All tasks in this workspace
+        </Link>
       </Section>
       <Section title="Stakeholders">
         <StakeholdersSection workspaceId={id} stakeholders={stakeholders} />
@@ -73,8 +95,7 @@ async function WorkspaceContent({
       </Section>
       <Section title="Settings">
         <WorkspaceSettingsForm
-          // A new key resets the form's defaults when the saved values change.
-          key={workspace.updatedAt.getTime()}
+          savedAt={workspace.updatedAt.getTime()}
           workspace={{
             id: workspace.id,
             name: workspace.name,

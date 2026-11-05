@@ -1,5 +1,6 @@
 "use client";
 
+import { unstable_rethrow } from "next/navigation";
 import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,21 @@ import { signIn, type SignInState } from "@/lib/auth/actions";
 const INITIAL_STATE: SignInState = { error: null, email: "", signedIn: false };
 
 export function LoginForm() {
-  const [state, action, isPending] = useActionState(signIn, INITIAL_STATE);
+  const [state, action, isPending] = useActionState(
+    async (previous: SignInState, formData: FormData): Promise<SignInState> => {
+      try {
+        return await signIn(previous, formData);
+      } catch (error) {
+        unstable_rethrow(error);
+        return {
+          error: "The server couldn't be reached. Check your connection and try again.",
+          email: String(formData.get("email") ?? ""),
+          signedIn: false,
+        };
+      }
+    },
+    INITIAL_STATE,
+  );
 
   useEffect(() => {
     if (state.signedIn) {

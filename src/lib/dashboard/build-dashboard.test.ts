@@ -75,6 +75,11 @@ describe("dashboard stats", () => {
     assert.equal(stats.overdue, 0);
   });
 
+  it("counts a task with waiting for filled in as waiting", () => {
+    const { stats } = build([task({ status: "todo", waitingFor: "Nadia" })]);
+    assert.equal(stats.waiting, 1);
+  });
+
   it("still counts a waiting task as overdue when its deadline has passed", () => {
     const { stats } = build([task({ status: "waiting", deadline: PAST })]);
     assert.equal(stats.waiting, 1);
@@ -86,11 +91,11 @@ describe("today's priorities", () => {
   const titles = (tasks: Task[]) =>
     build(tasks).priorities.map((item) => item.title);
 
-  it("puts overdue work ahead of work due today", () => {
+  it("puts overdue work ahead of equally important work due today", () => {
     assert.deepEqual(
       titles([
-        task({ title: "today", priority: "critical", deadline: LATER_TODAY }),
-        task({ title: "overdue", priority: "low", deadline: PAST }),
+        task({ title: "today", priority: "high", deadline: LATER_TODAY }),
+        task({ title: "overdue", priority: "high", deadline: PAST }),
       ]),
       ["overdue", "today"],
     );
@@ -103,14 +108,18 @@ describe("today's priorities", () => {
     );
   });
 
-  it("doesn't promote medium work that has no close deadline", () => {
+  it("doesn't recommend optional work with no deadline", () => {
+    assert.deepEqual(titles([task({ priority: "low", deadline: null })]), []);
+  });
+
+  it("doesn't promote a task for having a stakeholder", () => {
     assert.deepEqual(
       titles([
-        task({ priority: "medium", deadline: IN_THREE_DAYS }),
-        task({ priority: "medium", deadline: null }),
-        task({ priority: "high", deadline: NEXT_MONTH }),
+        task({ title: "from someone", priority: "medium", stakeholderId: "s-1" }),
+        task({ title: "close deadline", priority: "medium", deadline: IN_THREE_DAYS }),
+        task({ title: "far deadline", priority: "medium", deadline: NEXT_MONTH }),
       ]),
-      [],
+      ["close deadline", "far deadline", "from someone"],
     );
   });
 
@@ -142,6 +151,24 @@ describe("recent requests", () => {
     assert.deepEqual(
       recentRequests.map((item) => item.sourceRequest),
       ["newer", "older"],
+    );
+  });
+
+  it("includes unreviewed captures, with no workspace, linked to their review", () => {
+    const { recentRequests } = buildDashboard(
+      [task({ id: "t1", sourceRequest: "a task", createdAt: new Date("2026-11-01T10:00:00Z") })],
+      [WORKSPACE],
+      [],
+      NOW,
+      UTC,
+      [{ id: "c1", sourceText: "a capture", createdAt: new Date("2026-11-03T10:00:00Z") }],
+    );
+    assert.deepEqual(
+      recentRequests.map(({ sourceRequest, href, workspace }) => [sourceRequest, href, workspace?.name ?? null]),
+      [
+        ["a capture", "/inbox/c1", null],
+        ["a task", "/tasks/t1", "GoMyCode"],
+      ],
     );
   });
 });

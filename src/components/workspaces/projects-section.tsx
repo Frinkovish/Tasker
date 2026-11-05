@@ -1,7 +1,5 @@
 "use client";
 
-import { useActionState } from "react";
-
 import { EmptyState } from "@/components/common/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PROJECT_STATUS_LABELS, type Project } from "@/lib/domain/workspace";
 import { createProject, deleteProject } from "@/lib/workspaces/actions";
-import { INITIAL_FORM_STATE } from "@/lib/workspaces/form-state";
+import { useFormAction } from "@/lib/forms/use-form-action";
 
-import { DeleteButton } from "./delete-button";
-import { FormMessage } from "./form-message";
+import { DeleteButton } from "@/components/common/delete-button";
+import { FormMessage } from "@/components/common/form-message";
 
 interface ProjectsSectionProps {
   workspaceId: string;
@@ -23,9 +21,8 @@ export function ProjectsSection({
   workspaceId,
   projects,
 }: ProjectsSectionProps) {
-  const [state, action, isPending] = useActionState(
+  const { state, action, isPending, clearMessage } = useFormAction(
     createProject.bind(null, workspaceId),
-    INITIAL_FORM_STATE,
   );
 
   return (
@@ -62,7 +59,7 @@ export function ProjectsSection({
         </ul>
       )}
 
-      <form action={action} className="space-y-3">
+      <form action={action} onChange={clearMessage} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="project-name">Name</Label>
